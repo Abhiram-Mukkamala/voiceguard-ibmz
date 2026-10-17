@@ -1,9 +1,9 @@
 """
 server.py
 =========
-SIH26104 — Ingestion Layer + Decision/Enforcement Gateway.
+VoiceGuard — Ingestion Layer + Decision/Enforcement Gateway.
 
-FastAPI app exposing a bidirectional WebSocket at /ws/stream-verify.
+FastAPI app exposing a bidirectional WebSocket at /ws/stream-verify and /ws/stream.
 
 Wire protocol (binary-in, JSON-out):
   Client -> Server: raw PCM16LE mono audio chunks (any chunk size; typically
@@ -52,8 +52,14 @@ import json
 import traceback
 import base64
 import io
+import os
+import sys
 import wave
 from typing import Optional
+
+# Ensure sibling gateway modules and voiceguard modules can be imported
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "voiceguard")))
 
 import numpy as np
 
@@ -62,7 +68,18 @@ try:
     _AUDIOOP_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _AUDIOOP_AVAILABLE = False
-    from scipy.signal import resample_poly
+
+# resample_poly is also needed on big-endian hosts even when audioop exists.
+from scipy.signal import resample_poly
+
+# audioop reads native-endian samples; the wire format is PCM16LE. On big-endian
+# hosts (IBM Z / LinuxONE, s390x) fall through to the explicit-LE scipy path.
+if sys.byteorder == "big":
+    _AUDIOOP_AVAILABLE = False
+
+# Wire/PCM contract: explicit little-endian int16 (== np.int16 on x86/ARM only).
+_PCM16LE = np.dtype("<i2")
+
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
@@ -91,7 +108,7 @@ from fusion_engine import (
 from speaker_verification import SpeakerVerifier
 from auth import create_token, decode_token, TokenExpired, InvalidToken, websocket_authenticate
 
-app = FastAPI(title="SIH26104 Voice Clone Detection Gateway")
+app = FastAPI(title="VoiceGuard Voice Clone Detection Gateway")
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -100,7 +117,9 @@ STRIDE_SAMPLES = int(SAMPLE_RATE * STRIDE_S)  # 250ms @ 16kHz = 4000 samples
 
 # Loaded once at process start. Pass a real path once a checkpoint exists;
 # falls back to the explainable DSP heuristic otherwise (see acoustic_model.py).
-acoustic_model = AcousticModel(model_path=None)
+acoustic_model = AcousticModel(model_path=os.environ.get("TRACK_A_MODEL") or None)
+fusion_engine = FusionEngine()
+verifier = SpeakerVerifier()
 fusion_engine = FusionEngine()
 verifier = SpeakerVerifier()
 
@@ -154,15 +173,15 @@ def pcm16_bytes_to_float32(chunk: bytes, input_sample_rate: int) -> np.ndarray:
     if input_sample_rate != SAMPLE_RATE:
         if _AUDIOOP_AVAILABLE:
             chunk, _ = audioop.ratecv(chunk, 2, 1, input_sample_rate, SAMPLE_RATE, None)
-            pcm16 = np.frombuffer(chunk, dtype=np.int16)
+            pcm16 = np.frombuffer(chunk, dtype=_PCM16LE)
         else:
-            pcm16_in = np.frombuffer(chunk, dtype=np.int16)
+            pcm16_in = np.frombuffer(chunk, dtype=_PCM16LE)
             up = SAMPLE_RATE // np.gcd(SAMPLE_RATE, input_sample_rate)
             down = input_sample_rate // np.gcd(SAMPLE_RATE, input_sample_rate)
             resampled = resample_poly(pcm16_in.astype(np.float32), up, down)
-            pcm16 = np.clip(resampled, -32768, 32767).astype(np.int16)
+            pcm16 = np.clip(resampled, -32768, 32767).astype(_PCM16LE)
     else:
-        pcm16 = np.frombuffer(chunk, dtype=np.int16)
+        pcm16 = np.frombuffer(chunk, dtype=_PCM16LE)
     return (pcm16.astype(np.float32)) / 32768.0
 
 
@@ -216,6 +235,8 @@ def generate_liveness_challenge() -> dict:
 @app.post("/dev/token")
 async def dev_token(sub: str = "dev-user"):
     """Development-only JWT minting endpoint; never expose in production."""
+    if os.environ.get("ENABLE_DEV_TOKEN") != "1":
+        raise HTTPException(status_code=404, detail="Not Found")
     return {"token": create_token(sub), "sub": sub}
 
 
@@ -285,7 +306,7 @@ async def enroll_voiceprint(request: Request):
         if channels > 1:
             pcm = pcm.reshape(-1, channels).mean(axis=1).astype(np.int16)
         # Normalize enrollment input to the verifier's 16 kHz mono contract.
-        audio_16k = pcm16_bytes_to_float32(pcm.tobytes(), sample_rate)
+        audio_16k = pcm16_bytes_to_float32(pcm.astype(_PCM16LE).tobytes(), sample_rate)
         verifier.enroll(user_id, audio_16k)
         metadata = verifier.enrollment(user_id)
         if metadata is None:
