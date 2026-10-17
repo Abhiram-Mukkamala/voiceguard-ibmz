@@ -1,0 +1,32 @@
+flowchart TB
+    subgraph Ingestion["Ingestion Layer (s390x)"]
+        A[Inbound Call / WebRTC] -->|PCM16LE 16kHz Audio| B[FastAPI WebSocket /ws/stream]
+        B --> C[JWT Auth & Header Validation]
+        C --> D[In-Memory Ring Buffer<br/>1.0s Window / 250ms Stride]
+    end
+
+    subgraph FeatureExtraction["DSP Feature Extraction"]
+        D --> E[LFCC Extraction<br/>512 FFT, 40 Filters, 20 DCT<br/>Shape: 98x20]
+        D --> F[Prosody Extraction<br/>Jitter, Shimmer, Pitch, Voiced Ratio]
+        D --> G[Spectral Shape Extraction<br/>192-d L2-Normalized Profile]
+    end
+
+    subgraph ThreeTrack["Three-Track Detection"]
+        E --> H["Track A: Acoustic Model<br/>Pure-NumPy LCNN (Big-Endian Safe)<br/>20 Weight Tensors"]
+        F --> I["Track B: Prosody Inconsistency<br/>Synthetic Artifacts Heuristic"]
+        G --> J["Track C: Speaker Verification<br/>Cosine Distance vs Voiceprint"]
+    end
+
+    subgraph Fusion["Decision & Mitigation Engine"]
+        H -->|P_synthetic| K["Multi-Track Fusion Engine<br/>Weighted EMA (8 Strides / 2.0s)<br/>Packet-Loss Freezing"]
+        I -->|P_anomaly| K
+        J -->|P_impersonation| K
+        K --> L{Composite Risk Score}
+        L -->|< 0.35| M[ALLOW: Clear Audio]
+        L -->|0.35 - 0.70| N[CHALLENGE: Dynamic Liveness Prompt]
+        L -->|> 0.70| O["BLOCK: Policy Enforcement<br/>SEVER_SESSION (Code 1008)"]
+    end
+
+    subgraph Frontend["Real-Time Dashboard"]
+        K -->|JSON Telemetry| P["React 19 + Vite Dashboard<br/>Risk Gauge, Trace & Live Stream"]
+    end
