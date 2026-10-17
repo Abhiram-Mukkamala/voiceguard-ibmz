@@ -1,0 +1,46 @@
+diff --git a/app/acoustic_model.py b/app/acoustic_model.py
+index b543cc8..79148a2 100644
+--- a/app/acoustic_model.py
++++ b/app/acoustic_model.py
+@@ -30,8 +30,14 @@ class AcousticModel:
+         self.model_path = model_path
+         self.session = None
+         self.input_name = None
+-
+-        if model_path and _ORT_AVAILABLE and os.path.exists(model_path):
++        self.numpy_net = None
++
++        # No onnxruntime wheel on s390x: a directory of exported .npy weights
++        # (see numpy_lcnn.py) runs the same network in pure NumPy.
++        if model_path and os.path.isdir(model_path):
++            from numpy_lcnn import NumpyLCNN
++            self.numpy_net = NumpyLCNN(model_path)
++        elif model_path and _ORT_AVAILABLE and os.path.exists(model_path):
+             # INT8 quantized model -> CPUExecutionProvider is sufficient for
+             # sub-250ms budget at this input size; add 'CUDAExecutionProvider'
+             # first in the list if a GPU is available on the deployment box.
+@@ -42,17 +48,20 @@ class AcousticModel:
+ 
+     @property
+     def using_fallback(self) -> bool:
+-        return self.session is None
++        return self.session is None and self.numpy_net is None
+ 
+     def predict_vocoder_probability(self, lfcc: np.ndarray) -> float:
+         """
+         lfcc: (n_frames, n_lfcc) float32 array from dsp_pipeline.compute_lfcc.
+         Returns P(vocoder/synthetic) in [0, 1].
+         """
+-        if self.session is not None:
++        if self.session is not None or self.numpy_net is not None:
+             batch = lfcc[np.newaxis, :, :].astype(np.float32)  # (1, T, F)
+-            outputs = self.session.run(None, {self.input_name: batch})
+-            logits = outputs[0].squeeze()
++            if self.numpy_net is not None:
++                logits = self.numpy_net.logits(batch).squeeze()
++            else:
++                outputs = self.session.run(None, {self.input_name: batch})
++                logits = outputs[0].squeeze()
+             # Assumes a 2-logit [bonafide, spoof] head; adjust to your
+             # checkpoint's actual output contract at integration time.
+             probs = _softmax(logits)

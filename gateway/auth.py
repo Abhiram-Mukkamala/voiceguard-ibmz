@@ -13,9 +13,22 @@ import uuid
 from typing import Any
 
 
-SECRET_KEY = os.getenv(
-    "AUTH_SECRET", "sih26104-dev-secret-change-me-before-deploy"
-)
+DEFAULT_DEV_SECRET = "voiceguard-dev-secret-change-me-before-deploy"
+_env_secret = os.getenv("AUTH_SECRET")
+if not _env_secret:
+    if (
+        os.getenv("ALLOW_INSECURE_DEV") == "1"
+        or os.getenv("ENABLE_DEV_TOKEN") == "1"
+        or os.getenv("ENVIRONMENT", "development") == "development"
+    ):
+        SECRET_KEY = DEFAULT_DEV_SECRET
+    else:
+        raise RuntimeError(
+            "CRITICAL: AUTH_SECRET must be set in production mode. "
+            "Set AUTH_SECRET environment variable or set ALLOW_INSECURE_DEV=1 for local development."
+        )
+else:
+    SECRET_KEY = _env_secret
 TOKEN_TTL_S = int(os.getenv("TOKEN_TTL_S", "3600"))
 
 

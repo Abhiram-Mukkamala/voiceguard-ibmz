@@ -1,7 +1,7 @@
 """
 fusion_engine.py
 =================
-SIH26104 — Temporal Fusion & Risk Engine.
+VoiceGuard — Temporal Fusion & Risk Engine.
 
 Combines Track A (vocoder/deep-model probability), Track B (prosody anomaly
 probability), and Track C (identity/speaker impersonation probability) into

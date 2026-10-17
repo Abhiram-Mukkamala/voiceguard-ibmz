@@ -100,7 +100,7 @@ def test_root_serves_html():
     resp = urllib.request.urlopen("http://localhost:8000/")
     assert resp.status == 200
     html = resp.read().decode()
-    assert "SIH26104" in html
+    assert "VoiceGuard" in html
     assert "Voice Clone Detection" in html
 
 

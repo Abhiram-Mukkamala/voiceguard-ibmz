@@ -1,21 +1,24 @@
 """
 acoustic_model.py
 ==================
-Track A wrapper: loads an INT8-quantized ONNX acoustic model (AASIST /
-RawNet3 / WavLM-based spoof classifier) and exposes a single
+Track A wrapper: loads an INT8-quantized ONNX acoustic model or pure-NumPy
+LCNN weights directory (for s390x / IBM LinuxONE) and exposes a single
 `predict_vocoder_probability(lfcc)` call.
 
-This repo ships without a trained checkpoint (no SIH team has one on day
-one) — if `model_path` is missing, the class transparently falls back to
+If `model_path` is missing or unconfigured, the class transparently falls back to
 a deterministic, explainable DSP heuristic built from the same LFCC
 tensor, so the rest of the pipeline (fusion, server, WebSocket contract)
-is fully runnable and demoable end-to-end before the model is trained.
-Swap in a real .onnx file and nothing else in the codebase changes.
+is fully runnable and demoable end-to-end.
 """
 
 from __future__ import annotations
 
 import os
+import sys
+
+# Ensure voiceguard sibling directory can be imported
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "voiceguard")))
+
 import numpy as np
 
 try:
@@ -30,8 +33,14 @@ class AcousticModel:
         self.model_path = model_path
         self.session = None
         self.input_name = None
+        self.numpy_net = None
 
-        if model_path and _ORT_AVAILABLE and os.path.exists(model_path):
+        # No onnxruntime wheel on s390x: a directory of exported .npy weights
+        # (see numpy_lcnn.py) runs the same network in pure NumPy.
+        if model_path and os.path.isdir(model_path):
+            from numpy_lcnn import NumpyLCNN
+            self.numpy_net = NumpyLCNN(model_path)
+        elif model_path and _ORT_AVAILABLE and os.path.exists(model_path):
             # INT8 quantized model -> CPUExecutionProvider is sufficient for
             # sub-250ms budget at this input size; add 'CUDAExecutionProvider'
             # first in the list if a GPU is available on the deployment box.
@@ -42,17 +51,20 @@ class AcousticModel:
 
     @property
     def using_fallback(self) -> bool:
-        return self.session is None
+        return self.session is None and self.numpy_net is None
 
     def predict_vocoder_probability(self, lfcc: np.ndarray) -> float:
         """
         lfcc: (n_frames, n_lfcc) float32 array from dsp_pipeline.compute_lfcc.
         Returns P(vocoder/synthetic) in [0, 1].
         """
-        if self.session is not None:
+        if self.session is not None or self.numpy_net is not None:
             batch = lfcc[np.newaxis, :, :].astype(np.float32)  # (1, T, F)
-            outputs = self.session.run(None, {self.input_name: batch})
-            logits = outputs[0].squeeze()
+            if self.numpy_net is not None:
+                logits = self.numpy_net.logits(batch).squeeze()
+            else:
+                outputs = self.session.run(None, {self.input_name: batch})
+                logits = outputs[0].squeeze()
             # Assumes a 2-logit [bonafide, spoof] head; adjust to your
             # checkpoint's actual output contract at integration time.
             probs = _softmax(logits)

@@ -1,7 +1,7 @@
 """
 speaker_encoder.py
 ===================
-SIH26104 — Identity Track: ECAPA-TDNN Speaker Verification.
+VoiceGuard — Identity Track: ECAPA-TDNN Speaker Verification.
 
 Wraps an ONNX-exported ECAPA-TDNN model that produces a fixed-dimension
 speaker embedding from a 1-second audio window.  When no checkpoint is

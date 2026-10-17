@@ -1,7 +1,7 @@
 """
 dsp_pipeline.py
 ================
-SIH26104 — Voice Clone Impersonation Detection
+VoiceGuard — Voice Clone Impersonation Detection Gateway
 Track B: Pure NumPy/SciPy DSP Engine + Track A LFCC Front-End.
 100% dependency-free of librosa/numba (fully compatible with Python 3.10–3.14).
 """

@@ -1,7 +1,7 @@
 """
 speaker_verification.py
 ========================
-SIH26104 — Track C: Speaker Identity Verification.
+VoiceGuard — Track C: Speaker Identity Verification.
 
 Produces 192-dimensional L2-normalised speaker embeddings and compares
 live audio against enrolled voiceprints.  Two embedding backends:
