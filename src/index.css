@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+/* ─── Tokens ─── */
+:root {
+  /* Dark: charcoal / near-black */
+  --bg:           #0A0A0A;
+  --bg-2:         #111111;
+  --surface:      #181818;
+  --surface-2:    #202020;
+  --surface-3:    #2A2A2A;
+  --border:       rgba(255,255,255,0.06);
+  --border-2:     rgba(255,255,255,0.11);
+  --border-3:     rgba(255,255,255,0.18);
+  --fg:           #ECECEC;
+  --fg-2:         #9A9A9A;
+  --fg-3:         #555555;
+  --fg-4:         #303030;
+  /* Policy — these must stay vivid */
+  --allow:        #22C55E;
+  --challenge:    #F59E0B;
+  --block:        #EF4444;
+  /* Liquid glass */
+  --lg-bg:        rgba(255,255,255,0.04);
+  --lg-bg-strong: rgba(255,255,255,0.07);
+  --lg-border:    rgba(255,255,255,0.10);
+  --lg-border-s:  rgba(255,255,255,0.16);
+  --lg-hi:        rgba(255,255,255,0.07);
+  --lg-shadow:    0 8px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06) inset;
+}
+
+.light {
+  --bg:           #F5F2EA;
+  --bg-2:         #EDE9DF;
+  --surface:      rgba(255,255,255,0.50);
+  --surface-2:    rgba(255,255,255,0.80);
+  --surface-3:    rgba(245,242,234,0.65);
+  --border:       rgba(0,0,0,0.06);
+  --border-2:     rgba(0,0,0,0.10);
+  --border-3:     rgba(0,0,0,0.16);
+  --fg:           #1A1A1A;
+  --fg-2:         #555555;
+  --fg-3:         #999999;
+  --fg-4:         #D0D0D0;
+  --allow:        #16A34A;
+  --challenge:    #D97706;
+  --block:        #DC2626;
+  --lg-bg:        rgba(255,255,255,0.35);
+  --lg-bg-strong: rgba(255,255,255,0.55);
+  --lg-border:    rgba(0,0,0,0.07);
+  --lg-border-s:  rgba(0,0,0,0.12);
+  --lg-hi:        rgba(255,255,255,0.90);
+  --lg-shadow:    0 8px 32px rgba(0,0,0,0.09), 0 1px 0 rgba(255,255,255,0.90) inset;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+/* Paper-grain texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+}
+
+/* ─── Liquid Glass ─── */
+/* SVG displacement filter lives in <LiquidGlassFilter/>.
+   High scale (90) = strong refraction; not frozen (animated baseFrequency + seed). */
+.liquid-glass {
+  position: relative;
+  overflow: hidden;
+  background: var(--lg-bg);
+  border: 1px solid var(--lg-border);
+  box-shadow: var(--lg-shadow);
+  /* Displacement + slight blur for the lens body; brightness keeps it readable */
+  backdrop-filter:
+    url(#liquid-distort)
+    blur(0.6px)
+    brightness(1.06)
+    saturate(1.10);
+  -webkit-backdrop-filter:
+    url(#liquid-distort)
+    blur(0.6px)
+    brightness(1.06)
+    saturate(1.10);
+}
+/* Inner highlight rim — gives the "edge of glass" gloss */
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    var(--lg-hi) 0%,
+    rgba(255,255,255,0.01) 55%
+  );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+.liquid-glass > * { position: relative; z-index: 1; }
+
+/* Stronger variant — used for hero cards, modal surfaces */
+.liquid-glass-strong {
+  position: relative;
+  overflow: hidden;
+  background: var(--lg-bg-strong);
+  border: 1px solid var(--lg-border-s);
+  box-shadow:
+    var(--lg-shadow),
+    0 0 0 1px var(--lg-border) inset;
+  backdrop-filter:
+    url(#liquid-distort)
+    blur(1.2px)
+    brightness(1.10)
+    saturate(1.15);
+  -webkit-backdrop-filter:
+    url(#liquid-distort)
+    blur(1.2px)
+    brightness(1.10)
+    saturate(1.15);
+}
+.liquid-glass-strong::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    155deg,
+    var(--lg-hi) 0%,
+    rgba(255,255,255,0.00) 52%
+  );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+.liquid-glass-strong > * { position: relative; z-index: 1; }
+
+/* ─── Session-active border ─── */
+@keyframes border-march {
+  to { background-position: 200% center; }
+}
+@keyframes border-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(180,180,180,0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(180,180,180,0); }
+}
+
+.session-active-border {
+  border: 1.5px solid transparent !important;
+  background-clip: padding-box;
+  position: relative;
+  animation: border-pulse-glow 2s ease-in-out infinite;
+}
+.session-active-border::after {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent       0%,
+    var(--fg-3)       30%,
+    var(--fg)         50%,
+    var(--fg-3)       70%,
+    transparent      100%
+  );
+  background-size: 200% 100%;
+  animation: border-march 2.4s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar       { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+/* ─── Scroll progress ─── */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--fg-3);
+  z-index: 999;
+  transform-origin: left;
+  pointer-events: none;
+}
+
+/* ─── Utilities ─── */
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ─── Animations ─── */
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  10%,30%,50%,70%,90%{transform:translateX(-5px)}
+  20%,40%,60%,80%{transform:translateX(5px)}
+}
+@keyframes pulse-ring {
+  0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}
+  50%{box-shadow:0 0 0 16px rgba(239,68,68,0)}
+}
+@keyframes blink {
+  0%,100%{opacity:1} 50%{opacity:0}
+}
+@keyframes radio-ping {
+  0%  { transform:scale(1); opacity:.7 }
+  100%{ transform:scale(2.4); opacity:0 }
+}
+@keyframes float {
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-10px)}
+}
+
+.shake { animation: shake 0.5s ease; }
+.pulse-ring { animation: pulse-ring 1.5s ease-in-out infinite; }
+
+/* Nav liquid blur */
+.nav-liquid {
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}

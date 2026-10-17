@@ -1,0 +1,10 @@
+{
+  "description": "Monitor and analyze live call audio for AI voice cloning threats, providing real-time risk scores to banks and call centers for enhanced security.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

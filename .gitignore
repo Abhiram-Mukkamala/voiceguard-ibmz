@@ -1,0 +1,53 @@
+node_modules/
+dist/
+build/
+.cache/
+.env*
+.vite/
+vite.config.*.timestamp-*
+*.tsbuildinfo
+*-debug.log*
+logs/
+*.log
+.claude-replay.*
+.tmp-*
+/.figma/design-context/
+
+# Secrets and keys
+*.ppk
+*.pem
+*.key
+tokens/
+
+# Python caches and venv
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Staging, archives, temporary downloads
+staging_*/
+*.tar
+*.zip
+best.pt/
+best.pt.zip
+files.zip
+track_a.npz.zip
+gateway_143704d.tar
+files/
+
+# Root temporary scratch files
+/train_track_a.py
+/voice_scoring.py
+/s390x-endian-and-model-env.patch
+/voice-scoring-api.patch
+/track_a.onnx
+/track_a.int8.onnx
+/track_a.npz
+
+# Platform-managed agentplat state
+/.plugins/
+/.opencode-skills/
