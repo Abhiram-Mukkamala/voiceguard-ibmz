@@ -217,6 +217,8 @@ pnpm install
 pnpm build
 ```
 
+Dashboard login: the sign-in screen is a client-side demo gate (analyst@voiceguard.io / scamengers, see src/pages/Auth.tsx). It is not authentication. Real authentication is the HS256 JWT on the gateway WebSocket (section 6).
+
 ---
 
 ## 10. Technology Stack & Open-Source Citations
