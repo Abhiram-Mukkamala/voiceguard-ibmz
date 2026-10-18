@@ -1,8 +1,8 @@
-# Evidence Screenshots for Judges (IBM Z Datathon 2026)
+# Architecture & Verification Screenshots (IBM LinuxONE s390x)
 
-This directory contains visual evidence of deployment and validation on the **IBM LinuxONE (s390x) Virtual Machine** and the **VoiceGuard Dashboard**.
+This directory contains visual documentation of deployment and validation on the **IBM LinuxONE (s390x) Virtual Machine** and the **VoiceGuard Dashboard**.
 
-The following screenshots must be captured from the VM environment and stored in this folder prior to final submission:
+The following screenshots capture VM environment verification and live streaming telemetry:
 
 | File Name | Description & Command | Target Verification |
 | --- | --- | --- |

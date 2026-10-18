@@ -1,10 +1,15 @@
-# VoiceGuard: Real-Time Voice-Clone & Scam-Call Detection Gateway on IBM LinuxONE
+# VoiceGuard: real-time voice-anomaly scoring gateway on IBM LinuxONE (s390x)
 
-**Submission Title:** `[Scamengers]_IBM Z Datathon 2026 Project`  
-**Track:** AI Secured: Innovation Without Exposure  
-**Event Code:** SSF2026  
-**Team Name:** [Scamengers]  
-**Target Platform:** IBM LinuxONE (s390x, big-endian) Virtual Machine  
+VoiceGuard is a real-time voice-anomaly and synthetic speech detection gateway built to run within the memory enclave of an IBM LinuxONE (s390x) virtual machine. It pairs a sliding-window DSP feature extractor and pure-NumPy Max-Feature-Map CNN with a multi-track risk fusion engine and streaming telemetry console.
+
+**Status:** working prototype; the bundled detector is an untuned baseline (see [Known limitations](#8-known-limitations)).  
+*Built 17–18 Oct 2026 for IBM Z Datathon 2026; I missed the submission window, so it was never submitted.*
+
+---
+
+## 1. Project history
+
+The gateway foundation (WebSocket ingestion loop, fusion engine, audio DSP pipeline, speaker verification interface, and baseline console shell) was developed in September 2026 as a modular voice security gateway foundation and imported into this repository in commit `6dcb253`. Everything under `voiceguard/`, `patches/`, `scripts/`, `tests/`, the pure-NumPy big-endian s390x inference engine, the file scoring API, and the frontend live-streaming dashboard enhancements was created on 17–18 October 2026. See [PRIOR_WORK.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/PRIOR_WORK.md) for the file-by-file provenance table.
 
 ---
 
@@ -21,6 +26,7 @@ Existing cloud-based detection solutions require forwarding raw, unencrypted tel
 ### Training Dataset: ASVspoof 2019 Logical Access (LA)
 - **Reference Record:** University of Edinburgh DataShare ([https://datashare.ed.ac.uk/handle/10283/3336](https://datashare.ed.ac.uk/handle/10283/3336))
 - **Partitions:** Standard ASVspoof 2019 LA training and development splits (`ASVspoof2019.LA.cm.train.trn.txt` and `ASVspoof2019.LA.cm.dev.trl.txt`).
+- **Dev EER:** Not available (no training log retained).
 - **Loss Weighting:** 9:1 class weight applied to Cross-Entropy Loss to balance the ~90% spoof prevalence in the ASVspoof 2019 LA corpus.
 
 ### Feature Extraction Contract
@@ -49,7 +55,7 @@ from voiceguard.voice_scoring import analyze_voice
 result = analyze_voice("call.wav", model_path="voiceguard/model/track_a_npz")
 ```
 
-**Output Contract (JSON-serializable):**
+**Output Contract (JSON-serializable):** *(Example format only; values are illustrative.)*
 ```json
 {
   "is_genuine": false,
@@ -91,7 +97,7 @@ This project is tailored specifically for the hardware constraints and security 
 2. **Pure-NumPy LCNN Inference Engine:**
    * `onnxruntime` has **no available wheels** for Ubuntu 24.04 on s390x.
    * We implemented `voiceguard/numpy_lcnn.py`: a pure-NumPy vectorized forward pass of the Max-Feature-Map CNN that loads 20 weight tensors (`track_a_npz/*.npy`) exported from the PyTorch checkpoint.
-   * **Parity Verified:** Verified against ONNX Runtime reference on x86 (~4e-5 max logit difference vs ONNX reference in smoke test) and verified on the s390x VM with golden logits.
+   * **Parity Verified:** max abs diff 4.4e-5 vs stored reference logits, tolerance 1e-3 (scripts/smoke_test.py, s390x).
 3. **Big-Endian Architecture Hazards Resolved:**
    * **Network PCM Decoding:** Audio over telephony/WebSockets arrives as little-endian PCM16 (`<i2`). On big-endian s390x, native `np.int16` would byte-swap the samples into broadband noise. We enforce explicit `_PCM16LE = np.dtype("<i2")` in all buffer parsing.
    * **WAV Generation:** Python's `wave.writeframes()` assumes native host byte order and swaps bytes on big-endian platforms. All test audio generation utilizes native `np.int16` without `<i2` casting.
@@ -154,22 +160,18 @@ Reproduced identically on both x86 reference and the **IBM LinuxONE s390x VM**:
 - **Ramp input `np.arange(98*20).reshape(1,98,20)/(98*20) - 0.5`:**
   * Expected: `[-19.9592, 14.1075]`
   * Measured on s390x: `[-19.9592, 14.1075]`
-- **NumPy vs ONNX Discrepancy:** ~4e-5 max logit difference vs ONNX reference (smoke test prints 4.0e-5 on zeros, 2.9e-5 on ramp).
+- **NumPy vs ONNX Discrepancy:** max abs diff 4.4e-5 vs stored reference logits, tolerance 1e-3 (scripts/smoke_test.py, s390x).
 
 ### Measured Latency & Hardware Performance
 - **Pure-NumPy Inference:** ~1.3 ms per 1.0 s window.
 - **Server End-to-End Stride Latency on VM:** **12–19 ms** per 250 ms audio stride (well within the real-time telephony budget).
-- **Test Result on LinuxONE VM (5.0 s synthetic speech-like WAV):**
-  * `synthetic_probability`: **0.9985**
-  * `audio_confidence`: **0.9047**
-  * Windows scored: 7 of 9 active speech windows.
 
 ---
 
 ## 8. Known Limitations
 
 See [docs/LIMITS.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/docs/LIMITS.md) for full scientific limitations documentation:
-- **Baseline Checkpoint (Zero Accuracy / EER Claims):** The Track A LCNN checkpoint scored 1.0 synthetic (`P(synthetic) ≈ 1.0`) on every clip tested, including clean bona fide speech. It is an end-to-end architectural baseline and hardware verification pipeline; proper calibration and retraining on ASVspoof 2019 LA are the next step. No accuracy or Equal Error Rate (EER) claims are made for this checkpoint.
+- **Baseline Checkpoint Behavior (Zero Accuracy / EER Claims):** The Track A LCNN checkpoint returned synthetic probability 1.0 on every clip tested (clean bona fide speech, a second clip, the clip with leading silence, gains 0.1x–2x, and a TTS clip). Raw logits were approximately `[-27, +20]` for the clean bona fide clip. No preprocessing bug was found in the gateway path. No accuracy or Equal Error Rate (EER) claims are made for this baseline. The next step is retraining or recalibrating on ASVspoof 2019 LA with a held-out evaluation.
 - **ASVspoof 2019 LA Scope:** Clean 16 kHz English studio speech; unmeasured on regional Indian languages, dialects, or code-switching.
 - **Silence Shortcut:** Well-documented dataset artifacts in ASVspoof 2019 can inflate detection scores on unpadded data.
 - **Telephony Bandwidth:** Narrowband 8 kHz audio lacks high-frequency cepstral detail; flagged with lower `audio_confidence` (~0.45).
@@ -183,7 +185,7 @@ See [docs/LIMITS.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/do
 ### Local Verification (x86_64 or s390x)
 
 ```bash
-# 1. Run unit test suite (11 tests pass)
+# 1. Run test suite (10 passed, 1 skipped)
 python3 -m pytest tests/ -v
 
 # 2. Run golden logits smoke test
@@ -202,10 +204,10 @@ uvicorn server:app --app-dir gateway --host 127.0.0.1 --port 8000
 bash scripts/vm_setup.sh
 
 # 2. Run API daemon in background
-./scripts/run_api.sh
+bash scripts/run_api.sh
 
 # 3. Run end-to-end WebSocket streaming test
-./scripts/e2e.sh
+bash scripts/e2e.sh
 ```
 
 ### Frontend Development & Build
@@ -220,31 +222,22 @@ pnpm build
 
 ## 10. Technology Stack & Open-Source Citations
 
-In strict accordance with the datathon rules, all upstream open-source libraries are credited below:
-
-- [NumPy](https://numpy.org/) (`v1.26.4`) — Vectorized array operations and pure-NumPy LCNN forward pass.
-- [SciPy](https://scipy.org/) (`v1.11.4`) — Signal processing, `resample_poly`, and FFT filterbank generation.
-- [FastAPI](https://fastapi.tiangolo.com/) (`v0.143.3`) — High-performance asynchronous WebSocket and HTTP gateway.
-- [Uvicorn](https://www.uvicorn.org/) (`v0.54.0`) — ASGI server implementation.
-- [PyJWT](https://pyjwt.readthedocs.io/) (`v2.7.0`) — HS256 JSON Web Token verification.
-- [ONNX](https://onnx.ai/) & [ONNX Runtime](https://onnxruntime.ai/) (`v1.27.0`) — Model exchange and x86 reference verification.
-- [PyTorch](https://pytorch.org/) (`v2.6.0`) — LCNN training and checkpoint export.
-- [scikit-learn](https://scikit-learn.org/) (`v1.9.1`) — Feature metrics and evaluation utilities.
-- [soundfile](https://pysoundfile.readthedocs.io/) (`v0.14.0`) — Audio file format reader.
-- [React](https://react.dev/) (`v19.0.0`) & [React DOM](https://react.dev/) — User interface component framework.
-- [Vite](https://vitejs.dev/) (`v8.0.5`) — Frontend build system and development server.
-- [Tailwind CSS](https://tailwindcss.com/) (`v4.0.0`) — Modern utility-first CSS design system.
-- [Framer Motion](https://www.framer.com/motion/) (`v13.4.2`) — Smooth animations and telemetry transitions.
-- [Lucide React](https://lucide.dev/) (`v1.47.0`) — Accessible iconography.
-- [nginx](https://nginx.org/) — Reverse proxy and TLS termination on VM.
-- [Docker](https://www.docker.com/) — Containerized runtime for JupyterLab on LinuxONE.
-
----
-
-## 11. Team & Credits
-
-- **Team Name:** [Scamengers]
-- **Event:** IBM Z Datathon 2026 (Event Code: `SSF2026`)
-- **Submission Title:** `[Scamengers]_IBM Z Datathon 2026 Project`
-- **Team Members:** Team Scamengers
-- **Frontend Design:** Exported via Figma Make; modified and live-stream enhanced for real-time audio risk telemetry.
+- **Backend & Inference:**
+  - [NumPy](https://numpy.org/) (`>=1.24`) — Vectorized array operations and pure-NumPy LCNN forward pass
+  - [SciPy](https://scipy.org/) (`>=1.10`) — Signal processing, `resample_poly`, and FFT filterbanks
+  - [FastAPI](https://fastapi.tiangolo.com/) (`>=0.110`) — Asynchronous WebSocket and HTTP gateway
+  - [Uvicorn](https://www.uvicorn.org/) (`>=0.29`) — ASGI server implementation
+  - [PyJWT](https://pyjwt.readthedocs.io/) — HS256 JSON Web Token verification
+  - [PyTorch](https://pytorch.org/) — LCNN model training and checkpoint export
+  - [ONNX](https://onnx.ai/) & [ONNX Runtime](https://onnxruntime.ai/) — Reference verification
+  - [scikit-learn](https://scikit-learn.org/) — Metrics and feature utilities
+  - [soundfile](https://pysoundfile.readthedocs.io/) — Audio file I/O
+- **Frontend Dashboard:**
+  - [React](https://react.dev/) (`^19.0.0`) & [React DOM](https://react.dev/) (`^19.0.0`) — UI component framework
+  - [Vite](https://vitejs.dev/) (`^8.0.5`) — Build tooling and local dev server
+  - [Tailwind CSS](https://tailwindcss.com/) (`^4.0.0`) — Design tokens and utility styling
+  - [Framer Motion](https://www.framer.com/motion/) (`^13.4.2`) — Real-time telemetry animations
+  - [Lucide React](https://lucide.dev/) (`^1.47.0`) — Icons
+- **Infrastructure & Deployment:**
+  - [nginx](https://nginx.org/) — Reverse proxy and TLS termination
+  - [Docker](https://www.docker.com/) — Containerized runtime for LinuxONE Community Cloud

@@ -33,3 +33,8 @@ This is the canonical project structure. Start with task-relevant files below. O
 This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin configured in `vite.config.ts`. `src/index.css` imports Tailwind with `@import 'tailwindcss';`. Use Tailwind utility classes directly in JSX and put global CSS or Tailwind v4 theme customization in `src/index.css`. This scaffold does not need a Tailwind config file or PostCSS config.
 
 `src/main.tsx` imports `src/index.css`, so global font wiring belongs in `src/index.css`. Keep CSS `@import` statements first, then add any `@font-face` rules and font-family defaults there.
+
+## Repository Invariants
+
+- Never delete or rewrite `PRIOR_WORK.md`, `gateway/README_PRIOR.md` or the Project history section.
+- Never add accuracy, EER or detection claims that are not backed by a measurement in this repo.

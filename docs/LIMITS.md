@@ -1,6 +1,6 @@
 # VoiceGuard: Known Limitations & Boundary Conditions
 
-VoiceGuard was developed as an entry in the **IBM Z Datathon 2026** ("AI Secured: Innovation Without Exposure"). To maintain complete scientific integrity, this document details the architectural boundaries, dataset constraints, and operational limitations of the system.
+To maintain scientific integrity, this document details the architectural boundaries, dataset constraints, and operational limitations of the VoiceGuard system.
 
 ## 1. Dataset & Training Constraints
 - **Trained on ASVspoof 2019 Logical Access (LA) Only:**
