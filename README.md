@@ -252,8 +252,8 @@ VoiceGuard was developed by team **Scamengers**.
 - **Implementation in this repository** (s390x port, NumPy LCNN inference, scoring API, tests, dashboard integration): Abhiram Mukkamala.
 - **Gateway foundation (Sept 2026)**, imported in commit `6dcb253`: Abhiram Mukkamala.
 - **Team members:**
-  - Avani Rajhans ([@avanirajhans](https://github.com/avanirajhans)) — Idea and planning
-  - Ayaan Shaikh ([@ayaanfahim786-cmd](https://github.com/ayaanfahim786-cmd)) — Idea and planning
-  - Chaitanya Kherdikar ([@ByteReaper001](https://github.com/ByteReaper001)) — Idea and planning
-  - Shreyas Shah ([@shreyasshah707](https://github.com/shreyasshah707)) — Idea and planning
-  - [@Bitterminator06](https://github.com/Bitterminator06) — Idea and planning
+  - Avani Rajhans ([@avanirajhans](https://github.com/avanirajhans)) — UI/UX design and frontend experience
+  - Ayaan Shaikh ([@ayaanfahim786-cmd](https://github.com/ayaanfahim786-cmd)) — Backend services and gateway APIs
+  - Chaitanya Kherdikar ([@ByteReaper001](https://github.com/ByteReaper001)) — UI/UX design and dashboard architecture
+  - Shreyas Shah ([@shreyasshah707](https://github.com/shreyasshah707)) — System design and fraud decision engine
+  - Vishwajeet ([@Bitterminator06](https://github.com/Bitterminator06)) — Acoustic model development and training
