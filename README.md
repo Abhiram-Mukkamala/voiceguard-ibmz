@@ -242,3 +242,18 @@ Dashboard login: the sign-in screen is a client-side demo gate (analyst@voicegua
 - **Infrastructure & Deployment:**
   - [nginx](https://nginx.org/) — Reverse proxy and TLS termination
   - [Docker](https://www.docker.com/) — Containerized runtime for LinuxONE Community Cloud
+
+---
+
+## 11. Credits
+
+VoiceGuard was developed by team **Scamengers**.
+
+- **Implementation in this repository** (s390x port, NumPy LCNN inference, scoring API, tests, dashboard integration): Abhiram Mukkamala.
+- **Gateway foundation (Sept 2026)**, imported in commit `6dcb253`: Abhiram Mukkamala.
+- **Team members:**
+  - Avani Rajhans ([@avanirajhans](https://github.com/avanirajhans)) — Idea and planning
+  - Ayaan Shaikh ([@ayaanfahim786-cmd](https://github.com/ayaanfahim786-cmd)) — Idea and planning
+  - Chaitanya Kherdikar ([@ByteReaper001](https://github.com/ByteReaper001)) — Idea and planning
+  - Shreyas Shah ([@shreyasshah707](https://github.com/shreyasshah707)) — Idea and planning
+  - [@Bitterminator06](https://github.com/Bitterminator06) — Idea and planning
