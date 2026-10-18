@@ -1,0 +1,12 @@
+{
+  "features": [
+    "step",
+    "type",
+    "amount"
+  ],
+  "target": "isFraud",
+  "training_rows": 5090096,
+  "test_rows": 1272524,
+  "random_state": 42,
+  "threshold": 0.5
+}
