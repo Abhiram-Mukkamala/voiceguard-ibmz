@@ -10,7 +10,6 @@ Right: email + password form.
 
 Demo login only (no real IdP):
 Email: analyst@voiceguard.io
-Password: scamengers
 
 After a valid login, go to the session console.
 Visiting the console unsigned-in must bounce back to sign-in.

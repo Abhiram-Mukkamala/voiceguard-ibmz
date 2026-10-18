@@ -19,7 +19,7 @@ The gateway foundation (server, fusion engine, DSP, speaker verification baselin
 | `gateway/client_simulator.py` | Prior foundation | 2026-09-06 | Real-time WebSocket audio streaming test harness. |
 | `gateway/make_test_audio.py` | Prior foundation | 2026-09-02 | Harmonic test audio synthesizer. |
 | `gateway/static/index.html` | Prior foundation / Modified 17–18 Oct | 2026-09-02 / 2026-10-17 | Static fallback console; rebranded to VoiceGuard IBM Z. |
-| `gateway/tests/test_*.py` | Prior foundation | 2026-09-02 | Baseline unit tests for DSP, fusion engine, and speaker verification (baseline tests (not re-run in this repo)). |
+| `gateway/tests/test_*.py` | Prior foundation | 2026-09-02 | Baseline unit tests for DSP, fusion engine, and speaker verification (not re-run in this repo). |
 | `gateway/tests/test_pcm_endianness.py` | 17–18 Oct 2026 | 2026-10-17 11:13 | Byte-order contract test ensuring host-independent little-endian PCM decoding on s390x. |
 | `voiceguard/train_track_a.py` | 17–18 Oct 2026 | 2026-10-17 11:13 | Max-Feature-Map CNN (LCNN) trainer for ASVspoof 2019 LA; exports ONNX and NumPy weights. |
 | `voiceguard/voice_scoring.py` | 17–18 Oct 2026 | 2026-10-17 20:13 | File-level voice authenticity API (`analyze_voice`) returning 4-key JSON verdict with heuristic `audio_confidence`. |

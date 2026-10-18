@@ -91,7 +91,7 @@ result = analyze_voice("call.wav", model_path="voiceguard/model/track_a_npz")
 
 This project is tailored specifically for the hardware constraints and security posture of **IBM LinuxONE (s390x, big-endian)**:
 
-1. **On-Platform Local Inference:**
+1. **In-memory audio handling:**
    * The streaming path keeps audio in an in-memory ring buffer and does not write it to disk (by design; not independently audited).
 2. **Pure-NumPy LCNN Inference Engine:**
    * `onnxruntime` has **no available wheels** for Ubuntu 24.04 on s390x.
