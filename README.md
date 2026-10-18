@@ -8,7 +8,17 @@
 
 ---
 
-## 2. Problem: Voice-Clone Scam Calls
+## 2. Provenance & Prior Work Disclosure
+
+> [!IMPORTANT]
+> **Integrity Disclosure:**
+> The gateway foundation (server, fusion engine, audio DSP extraction, speaker verification interface, and baseline shell) was developed in September 2026 as a modular voice security gateway foundation and predates this datathon. Everything under `voiceguard/`, `patches/`, `scripts/`, `tests/`, the trained LCNN model checkpoint, the pure-NumPy big-endian s390x inference engine, the file scoring API, and the frontend live-streaming dashboard enhancements was created during the **IBM Z Datathon 2026** on 17–18 October 2026.
+> 
+> The organizers and judges were informed: **[TO FILL: when, how, link to the written confirmation]**. See [PRIOR_WORK.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/PRIOR_WORK.md) for the complete file-by-file provenance audit.
+
+---
+
+## 3. Problem: Voice-Clone Scam Calls
 
 Generative voice cloning has transformed phone phishing and authorized push payment (APP) fraud. With fewer than three seconds of reference audio, attackers can synthesize convincing impersonations of bank executives, family members, or corporate officers.
 
@@ -21,7 +31,7 @@ Existing cloud-based detection solutions require forwarding raw, unencrypted tel
 
 ---
 
-## 3. Training Data & Front-End Feature Contract
+## 4. Training Data & Front-End Feature Contract
 
 ### Training Dataset: ASVspoof 2019 Logical Access (LA)
 - **Reference Record:** University of Edinburgh DataShare ([https://datashare.ed.ac.uk/handle/10283/3336](https://datashare.ed.ac.uk/handle/10283/3336))
@@ -42,7 +52,7 @@ Existing cloud-based detection solutions require forwarding raw, unencrypted tel
 
 ---
 
-## 4. Solution Architecture
+## 5. Solution Architecture
 
 VoiceGuard provides two complementary enterprise interfaces running entirely within the secure boundary of an IBM LinuxONE VM:
 
@@ -88,7 +98,7 @@ result = analyze_voice("call.wav", model_path="voiceguard/model/track_a_npz")
 
 ---
 
-## 5. How It Uses IBM Z / LinuxONE
+## 6. How It Uses IBM Z / LinuxONE
 
 This project is tailored specifically for the hardware constraints and security posture of **IBM LinuxONE (s390x, big-endian)**:
 
@@ -111,7 +121,7 @@ This project is tailored specifically for the hardware constraints and security 
 
 ---
 
-## 6. Architecture
+## 7. Architecture
 
 ```mermaid
 flowchart TB
@@ -150,7 +160,7 @@ flowchart TB
 
 ---
 
-## 7. Experimental Results & Verification
+## 8. Experimental Results & Verification
 
 ### Verified Golden Logits (Smoke Test)
 Reproduced identically on both x86 reference and the **IBM LinuxONE s390x VM**:
@@ -174,7 +184,7 @@ Reproduced identically on both x86 reference and the **IBM LinuxONE s390x VM**:
 
 ---
 
-## 8. Scientific Limitations
+## 9. Scientific Limitations
 
 See [docs/LIMITS.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/docs/LIMITS.md) for full documentation:
 - **ASVspoof 2019 LA Scope:** Clean 16 kHz English studio speech; unmeasured on regional Indian languages, dialects, or code-switching.
@@ -185,7 +195,7 @@ See [docs/LIMITS.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/do
 
 ---
 
-## 9. Run It
+## 10. Run It
 
 ### Local Verification (x86_64 or s390x)
 
@@ -225,7 +235,7 @@ pnpm build
 
 ---
 
-## 10. Technology Stack & Open-Source Citations
+## 11. Technology Stack & Open-Source Citations
 
 In strict accordance with the datathon rules, all upstream open-source libraries are credited below:
 
@@ -248,7 +258,7 @@ In strict accordance with the datathon rules, all upstream open-source libraries
 
 ---
 
-## 11. Team & Credits
+## 12. Team & Credits
 
 - **Team Name:** [Scamengers]
 - **Event:** IBM Z Datathon 2026 (Event Code: `SSF2026`)

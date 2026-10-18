@@ -4,9 +4,13 @@ Every item below marked with `[TO FILL]` represents measured numbers, verifiable
 
 ---
 
-## 1. Team Authorship & Credits
+## 1. Provenance & Official Communication
+- [ ] **Judges / Organizers Prior Work Disclosure:**
+  - File: `PRIOR_WORK.md` and `README.md`
+  - Item: `[TO FILL: when, how, link to the written confirmation]`
+  - Action: Record the exact date and communication channel (e.g., Discord ticket, email) where the prior modular gateway foundation was disclosed to the IBM Z Datathon organizers.
 - [ ] **Frontend Authorship:**
-  - File: `README.md`
+  - File: `README.md` and `PRIOR_WORK.md`
   - Item: `[TO FILL: who built it and when]`
   - Action: Document the team member(s) who designed and exported the Figma Make frontend on 17 October 2026.
 
