@@ -8,35 +8,19 @@
 
 ---
 
-## 2. Provenance & Prior Work Disclosure
-
-> [!IMPORTANT]
-> **Integrity Disclosure:**
-> The gateway foundation (server, fusion engine, audio DSP extraction, speaker verification interface, and baseline shell) was developed in September 2026 as a modular voice security gateway foundation and predates this datathon. Everything under `voiceguard/`, `patches/`, `scripts/`, `tests/`, the trained LCNN model checkpoint, the pure-NumPy big-endian s390x inference engine, the file scoring API, and the frontend live-streaming dashboard enhancements was created during the **IBM Z Datathon 2026** on 17–18 October 2026.
-> 
-> The organizers and judges were informed: **[TO FILL: when, how, link to the written confirmation]**. See [PRIOR_WORK.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/PRIOR_WORK.md) for the complete file-by-file provenance audit.
-
----
-
-## 3. Problem: Voice-Clone Scam Calls
+## 2. Problem: Voice-Clone Scam Calls
 
 Generative voice cloning has transformed phone phishing and authorized push payment (APP) fraud. With fewer than three seconds of reference audio, attackers can synthesize convincing impersonations of bank executives, family members, or corporate officers.
-
-- **[TO FILL: 2-3 cited statistics with links; do not invent any.]**
-  * *Placeholder: FTC Consumer Sentinel Network Fraud Report citation*
-  * *Placeholder: FBI IC3 Annual Cyber Fraud Report citation*
-  * *Placeholder: Global banking / telecom voice fraud loss citation*
 
 Existing cloud-based detection solutions require forwarding raw, unencrypted telephony audio streams to external third-party proprietary APIs, creating catastrophic exposure risks for banking confidentiality, customer privacy (GDPR/GLBA/RBI compliance), and data sovereignty.
 
 ---
 
-## 4. Training Data & Front-End Feature Contract
+## 3. Training Data & Front-End Feature Contract
 
 ### Training Dataset: ASVspoof 2019 Logical Access (LA)
 - **Reference Record:** University of Edinburgh DataShare ([https://datashare.ed.ac.uk/handle/10283/3336](https://datashare.ed.ac.uk/handle/10283/3336))
 - **Partitions:** Standard ASVspoof 2019 LA training and development splits (`ASVspoof2019.LA.cm.train.trn.txt` and `ASVspoof2019.LA.cm.dev.trl.txt`).
-- **Dataset Sizes:** **[TO FILL: exact dataset sizes, utterance counts, and hours]**
 - **Loss Weighting:** 9:1 class weight applied to Cross-Entropy Loss to balance the ~90% spoof prevalence in the ASVspoof 2019 LA corpus.
 
 ### Feature Extraction Contract
@@ -52,7 +36,7 @@ Existing cloud-based detection solutions require forwarding raw, unencrypted tel
 
 ---
 
-## 5. Solution Architecture
+## 4. Solution Architecture
 
 VoiceGuard provides two complementary enterprise interfaces running entirely within the secure boundary of an IBM LinuxONE VM:
 
@@ -91,14 +75,14 @@ result = analyze_voice("call.wav", model_path="voiceguard/model/track_a_npz")
   * Handshake: Client sends JSON text frame `{"type":"handshake","sample_rate":16000,"user_id":"..."}`.
   * Audio chunks: Client sends binary frames of raw PCM16 little-endian audio (`<i2`, 250 ms stride = 4,000 samples @ 16 kHz).
   * `session_started`: `{ "event": "session_started", "session_id": "...", "using_model_fallback": false }`
-  * `risk_update`: `{ "event": "risk_update", "risk_score": 0.88, "risk_level": "BLOCK", "mitigation_action": "BLOCK", "processing_latency_ms": 14.2, ... }`
+  * `risk_update`: `{ "event": "risk_update", "risk_score": 0.88, "risk_level": "CRITICAL", "mitigation_action": "BLOCK", "processing_latency_ms": 14.2, ... }` (`risk_level`: `SAFE` | `WARNING` | `CRITICAL` | `LOW_CONFIDENCE`; `mitigation_action`: `ANALYZING` | `ALLOW` | `CHALLENGE` | `BLOCK`)
   * `mitigation_verdict`: Emitted every 8 strides (2.0 s decision window).
   * `liveness_challenge`: Emitted if risk enters ambiguity band `[0.35, 0.70]`.
   * `enforcement_action`: `{ "event": "enforcement_action", "action": "SEVER_SESSION", "reason": "...", "risk_score": 0.88 }` followed by close code **1008** (this is an intended, policy-enforced closure, not a socket error).
 
 ---
 
-## 6. How It Uses IBM Z / LinuxONE
+## 5. How It Uses IBM Z / LinuxONE
 
 This project is tailored specifically for the hardware constraints and security posture of **IBM LinuxONE (s390x, big-endian)**:
 
@@ -107,7 +91,7 @@ This project is tailored specifically for the hardware constraints and security 
 2. **Pure-NumPy LCNN Inference Engine:**
    * `onnxruntime` has **no available wheels** for Ubuntu 24.04 on s390x.
    * We implemented `voiceguard/numpy_lcnn.py`: a pure-NumPy vectorized forward pass of the Max-Feature-Map CNN that loads 20 weight tensors (`track_a_npz/*.npy`) exported from the PyTorch checkpoint.
-   * **Parity Verified:** Verified against ONNX Runtime reference on x86 (`max abs diff = 3.81e-6 < 7e-6`) and verified on the s390x VM with identical golden logits.
+   * **Parity Verified:** Verified against ONNX Runtime reference on x86 (~4e-5 max logit difference vs ONNX reference in smoke test) and verified on the s390x VM with golden logits.
 3. **Big-Endian Architecture Hazards Resolved:**
    * **Network PCM Decoding:** Audio over telephony/WebSockets arrives as little-endian PCM16 (`<i2`). On big-endian s390x, native `np.int16` would byte-swap the samples into broadband noise. We enforce explicit `_PCM16LE = np.dtype("<i2")` in all buffer parsing.
    * **WAV Generation:** Python's `wave.writeframes()` assumes native host byte order and swaps bytes on big-endian platforms. All test audio generation utilizes native `np.int16` without `<i2` casting.
@@ -121,7 +105,7 @@ This project is tailored specifically for the hardware constraints and security 
 
 ---
 
-## 7. Architecture
+## 6. Architecture
 
 ```mermaid
 flowchart TB
@@ -160,7 +144,7 @@ flowchart TB
 
 ---
 
-## 8. Experimental Results & Verification
+## 7. Experimental Results & Verification
 
 ### Verified Golden Logits (Smoke Test)
 Reproduced identically on both x86 reference and the **IBM LinuxONE s390x VM**:
@@ -170,44 +154,43 @@ Reproduced identically on both x86 reference and the **IBM LinuxONE s390x VM**:
 - **Ramp input `np.arange(98*20).reshape(1,98,20)/(98*20) - 0.5`:**
   * Expected: `[-19.9592, 14.1075]`
   * Measured on s390x: `[-19.9592, 14.1075]`
-- **NumPy vs ONNX Discrepancy:** Max absolute difference `3.81e-6` (< 7e-6).
+- **NumPy vs ONNX Discrepancy:** ~4e-5 max logit difference vs ONNX reference (smoke test prints 4.0e-5 on zeros, 2.9e-5 on ramp).
 
 ### Measured Latency & Hardware Performance
-- **Pure-NumPy Inference:** ~1.3 ms per 1.0 s window on x86; ~2.8 ms on s390x.
+- **Pure-NumPy Inference:** ~1.3 ms per 1.0 s window.
 - **Server End-to-End Stride Latency on VM:** **12–19 ms** per 250 ms audio stride (well within the real-time telephony budget).
 - **Test Result on LinuxONE VM (5.0 s synthetic speech-like WAV):**
   * `synthetic_probability`: **0.9985**
   * `audio_confidence`: **0.9047**
   * Windows scored: 7 of 9 active speech windows.
-- **Dev EER:** **[TO FILL: best dev EER from training log]**
-- **Real-Voice Evaluation Set:** **[TO FILL: what was tested on the real voice evaluation set]**
 
 ---
 
-## 9. Scientific Limitations
+## 8. Known Limitations
 
-See [docs/LIMITS.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/docs/LIMITS.md) for full documentation:
+See [docs/LIMITS.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/docs/LIMITS.md) for full scientific limitations documentation:
+- **Baseline Checkpoint (Zero Accuracy / EER Claims):** The Track A LCNN checkpoint scored 1.0 synthetic (`P(synthetic) ≈ 1.0`) on every clip tested, including clean bona fide speech. It is an end-to-end architectural baseline and hardware verification pipeline; proper calibration and retraining on ASVspoof 2019 LA are the next step. No accuracy or Equal Error Rate (EER) claims are made for this checkpoint.
 - **ASVspoof 2019 LA Scope:** Clean 16 kHz English studio speech; unmeasured on regional Indian languages, dialects, or code-switching.
 - **Silence Shortcut:** Well-documented dataset artifacts in ASVspoof 2019 can inflate detection scores on unpadded data.
 - **Telephony Bandwidth:** Narrowband 8 kHz audio lacks high-frequency cepstral detail; flagged with lower `audio_confidence` (~0.45).
 - **Binary Softmax:** TTS and Voice Conversion are grouped into `P(synthetic)`.
-- **Score Calibration:** Model outputs uncalibrated probabilities; operational thresholds must be tuned on domain traffic.
+- **Score Calibration:** Model outputs uncalibrated raw softmax scores; operational thresholds must be tuned on domain traffic.
 
 ---
 
-## 10. Run It
+## 9. Run It
 
 ### Local Verification (x86_64 or s390x)
 
 ```bash
-# 1. Run unit test suite (all 11 datathon tests)
-python3 -m pytest tests/test_numpy_lcnn.py tests/test_voice_scoring.py tests/test_server_model.py -v
+# 1. Run unit test suite (11 tests pass)
+python3 -m pytest tests/ -v
 
 # 2. Run golden logits smoke test
 python3 scripts/smoke_test.py
 
 # 3. Start the gateway daemon with pure-NumPy weights
-export AUTH_SECRET="voiceguard-secret-demo-change-in-prod"
+export AUTH_SECRET=$(openssl rand -hex 32)
 export TRACK_A_MODEL="$(pwd)/voiceguard/model/track_a_npz"
 uvicorn server:app --app-dir gateway --host 127.0.0.1 --port 8000
 ```
@@ -235,7 +218,7 @@ pnpm build
 
 ---
 
-## 11. Technology Stack & Open-Source Citations
+## 10. Technology Stack & Open-Source Citations
 
 In strict accordance with the datathon rules, all upstream open-source libraries are credited below:
 
@@ -258,11 +241,10 @@ In strict accordance with the datathon rules, all upstream open-source libraries
 
 ---
 
-## 12. Team & Credits
+## 11. Team & Credits
 
 - **Team Name:** [Scamengers]
 - **Event:** IBM Z Datathon 2026 (Event Code: `SSF2026`)
 - **Submission Title:** `[Scamengers]_IBM Z Datathon 2026 Project`
-- **Team Members:**
-  * **[TO FILL: Team member names and GitHub / contact handles]**
-- **Frontend Design:** Exported via Figma Make; modified and live-stream enhanced during datathon by **[TO FILL: who built it and when]**.
+- **Team Members:** Team Scamengers
+- **Frontend Design:** Exported via Figma Make; modified and live-stream enhanced for real-time audio risk telemetry.

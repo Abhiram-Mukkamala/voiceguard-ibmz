@@ -34,14 +34,10 @@
 - **Dataset:** ASVspoof 2019 LA (Logical Access)
   - Reference: University of Edinburgh DataShare ([https://datashare.ed.ac.uk/handle/10283/3336](https://datashare.ed.ac.uk/handle/10283/3336))
   - Training / Dev partitions: ASVspoof2019.LA.cm.train.trn.txt / ASVspoof2019.LA.cm.dev.trl.txt
-  - Data Sizes: `[TO FILL: dataset size and utterance counts]`
 - **Loss Function:** Weighted Cross-Entropy Loss with 9:1 weighting (accounting for the ~90% spoof prevalence in ASVspoof 2019 LA).
 - **Training Hyperparameters:**
   - Optimizer: Adam, lr=0.0003
   - Batch size: 64
-  - Epochs: `[TO FILL: epochs trained]`
-  - Best Dev EER: `[TO FILL: best dev EER from training log]`
-  - Training Date: `[TO FILL: training date and duration]`
 
 ## Hardware Acceleration & s390x Architecture Port
 - **s390x Constraint:** `onnxruntime` has no official or community wheels for Ubuntu 24.04 on s390x (big-endian).
@@ -52,10 +48,11 @@
 - **Reference Smoke Test Outputs (Exact Verification):**
   - All-zeros input `(1, 98, 20)`: `[-28.1055, 19.7470]`
   - Ramp input `np.arange(98*20, dtype=np.float32).reshape(1,98,20)/(98*20) - 0.5`: `[-19.9592, 14.1075]`
-  - Maximum absolute discrepancy between ONNX Runtime (x86) and NumPy LCNN: `3.81e-6` (< 7e-6 threshold).
+  - Maximum absolute discrepancy between ONNX Runtime (x86) and NumPy LCNN: `~4e-5` (smoke test prints 4.0e-5 on zeros, 2.9e-5 on ramp).
   - Inference Latency: ~1.3 ms per 1.0 s window on x86, measured 12-19 ms total stride processing on s390x VM.
 
 ## Limitations & Ethical Considerations
+- **Baseline Checkpoint (Zero Accuracy / EER Claims):** The Track A LCNN checkpoint scored 1.0 synthetic (`P(synthetic) ≈ 1.0`) on every clip tested, including clean bona fide speech. It is an uncalibrated architectural baseline and hardware verification pipeline; calibration and retraining on ASVspoof 2019 LA are the next step. No accuracy or Equal Error Rate (EER) claims are made for this checkpoint.
 - **Binary Classification:** Does not distinguish Text-to-Speech (TTS) from Voice Conversion (VC).
 - **Domain Mismatch:** Trained on clean 16 kHz studio recordings; real telephony codecs (G.711 A-law/mu-law, AMR, Opus) and background ambient noise require empirical calibration.
 - **Dataset Artifacts:** ASVspoof 2019 has known silence/concatenation cues; real-world deployment requires voice activity gating (`audio_confidence`).

@@ -25,7 +25,11 @@ VoiceGuard was developed as an entry in the **IBM Z Datathon 2026** ("AI Secured
   - It does **not** discriminate between Text-to-Speech (TTS) and Voice Conversion (VC). Both attacks map to `P(synthetic)`.
   - Distinguishing specific synthesis algorithms would require multi-class training using the attack system IDs (`A01`–`A19`), which is not implemented in the current weights checkpoint.
 
-## 4. Score Calibration
+## 4. Score Calibration & Baseline Checkpoint Behavior
+- **Baseline Checkpoint Behavior (Zero Accuracy / EER Claims):**
+  - The current Track A LCNN checkpoint scored 1.0 synthetic (`P(synthetic) ≈ 1.0`) on every clip tested, including clean bona fide speech.
+  - It serves as an architectural baseline and hardware execution verification pipeline for s390x big-endian LinuxONE.
+  - Systematic calibration, threshold tuning, and retraining on the full ASVspoof 2019 LA corpus are the next required steps. No claims of production accuracy or Equal Error Rate (EER) are made for this baseline.
 - **Uncalibrated Model Scores:**
   - The output probabilities represent raw softmax logits from a network trained with a 9:1 class weight penalty (matching the ~90% spoof prevalence in ASVspoof 2019).
   - Therefore, a returned `synthetic_probability` of 0.88 does **not** signify that 88% of identical calls in the wild are fraudulent.
