@@ -19,7 +19,7 @@ The gateway foundation (server, fusion engine, DSP, speaker verification baselin
 | `gateway/client_simulator.py` | Prior foundation | 2026-09-06 | Real-time WebSocket audio streaming test harness. |
 | `gateway/make_test_audio.py` | Prior foundation | 2026-09-02 | Harmonic test audio synthesizer. |
 | `gateway/static/index.html` | Prior foundation / Modified 17–18 Oct | 2026-09-02 / 2026-10-17 | Static fallback console; rebranded to VoiceGuard IBM Z. |
-| `gateway/tests/test_*.py` | Prior foundation | 2026-09-02 | Baseline unit tests for DSP, fusion engine, and speaker verification (all re-verified and passing). |
+| `gateway/tests/test_*.py` | Prior foundation | 2026-09-02 | Baseline unit tests for DSP, fusion engine, and speaker verification (baseline tests (not re-run in this repo)). |
 | `gateway/tests/test_pcm_endianness.py` | 17–18 Oct 2026 | 2026-10-17 11:13 | Byte-order contract test ensuring host-independent little-endian PCM decoding on s390x. |
 | `voiceguard/train_track_a.py` | 17–18 Oct 2026 | 2026-10-17 11:13 | Max-Feature-Map CNN (LCNN) trainer for ASVspoof 2019 LA; exports ONNX and NumPy weights. |
 | `voiceguard/voice_scoring.py` | 17–18 Oct 2026 | 2026-10-17 20:13 | File-level voice authenticity API (`analyze_voice`) returning 4-key JSON verdict with heuristic `audio_confidence`. |
@@ -30,7 +30,7 @@ The gateway foundation (server, fusion engine, DSP, speaker verification baselin
 | `patches/*.patch` | 17–18 Oct 2026 | 2026-10-17 | Git patches showing exact diffs applied to the prior foundation files. |
 | `frontend/` (React + Vite) | 17–18 Oct 2026 | 2026-10-17 | Figma Make export updated with event normalization, `LOW_CONFIDENCE` risk gauge state, close code 1008 handling, and Live audio upload streaming. |
 | `scripts/vm_setup.sh` | 17–18 Oct 2026 | 2026-10-17 | Idempotent s390x setup script for Ubuntu 24.04 on IBM LinuxONE. |
-| `scripts/run_api.sh` | 17–18 Oct 2026 | 2026-10-17 | Production-ready daemon runner with `AUTH_SECRET` enforcement and `TRACK_A_MODEL` binding. |
+| `scripts/run_api.sh` | 17–18 Oct 2026 | 2026-10-17 | Daemon runner with `AUTH_SECRET` enforcement and `TRACK_A_MODEL` binding. |
 | `scripts/smoke_test.py` | 17–18 Oct 2026 | 2026-10-17 | Golden logit vector verification test for LinuxONE s390x deployment. |
 | `scripts/e2e.sh` | 17–18 Oct 2026 | 2026-10-17 | End-to-end WebSocket integration test validating `risk_update` emission. |
 | `tests/test_numpy_lcnn.py` | 17–18 Oct 2026 | 2026-10-17 | Golden logits, ONNX parity, and big-endian weight loading tests. |

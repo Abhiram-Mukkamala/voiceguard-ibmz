@@ -1,15 +1,14 @@
 # VoiceGuard: real-time voice-anomaly scoring gateway on IBM LinuxONE (s390x)
 
-VoiceGuard is a real-time voice-anomaly and synthetic speech detection gateway built to run within the memory enclave of an IBM LinuxONE (s390x) virtual machine. It pairs a sliding-window DSP feature extractor and pure-NumPy Max-Feature-Map CNN with a multi-track risk fusion engine and streaming telemetry console.
+VoiceGuard is a real-time voice-anomaly and synthetic speech detection gateway built to run on an IBM LinuxONE (s390x) virtual machine. It pairs a sliding-window DSP feature extractor and pure-NumPy Max-Feature-Map CNN with a multi-track risk fusion engine and streaming telemetry console.
 
-**Status:** working prototype; the bundled detector is an untuned baseline (see [Known limitations](#8-known-limitations)).  
-*Built 17–18 Oct 2026 for IBM Z Datathon 2026; I missed the submission window, so it was never submitted.*
+**Status:** working prototype; the bundled detector is an untuned baseline (see [Known limitations](#8-known-limitations)).
 
 ---
 
 ## 1. Project history
 
-The gateway foundation (WebSocket ingestion loop, fusion engine, audio DSP pipeline, speaker verification interface, and baseline console shell) was developed in September 2026 as a modular voice security gateway foundation and imported into this repository in commit `6dcb253`. Everything under `voiceguard/`, `patches/`, `scripts/`, `tests/`, the pure-NumPy big-endian s390x inference engine, the file scoring API, and the frontend live-streaming dashboard enhancements was created on 17–18 October 2026. See [PRIOR_WORK.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/PRIOR_WORK.md) for the file-by-file provenance table.
+The gateway foundation (WebSocket ingestion loop, fusion engine, audio DSP pipeline, speaker verification interface, and baseline console shell) was developed in September 2026 as a modular voice security gateway foundation and imported into this repository in commit `6dcb253`. Everything under `voiceguard/`, `patches/`, `scripts/`, `tests/`, the pure-NumPy big-endian s390x inference engine, the file scoring API, and the frontend live-streaming dashboard enhancements was created on 17–18 October 2026. See [PRIOR_WORK.md](PRIOR_WORK.md) for the file-by-file provenance table.
 
 ---
 
@@ -92,8 +91,8 @@ result = analyze_voice("call.wav", model_path="voiceguard/model/track_a_npz")
 
 This project is tailored specifically for the hardware constraints and security posture of **IBM LinuxONE (s390x, big-endian)**:
 
-1. **On-Platform Local Inference (Zero Exposure):**
-   * Sensitive telephony audio remains strictly in RAM inside the LinuxONE enclave. Audio frames live only in a sliding NumPy array and are purged and zeroed upon socket disconnect. No raw audio ever touches persistent disk or external networks.
+1. **On-Platform Local Inference:**
+   * The streaming path keeps audio in an in-memory ring buffer and does not write it to disk (by design; not independently audited).
 2. **Pure-NumPy LCNN Inference Engine:**
    * `onnxruntime` has **no available wheels** for Ubuntu 24.04 on s390x.
    * We implemented `voiceguard/numpy_lcnn.py`: a pure-NumPy vectorized forward pass of the Max-Feature-Map CNN that loads 20 weight tensors (`track_a_npz/*.npy`) exported from the PyTorch checkpoint.
@@ -170,7 +169,7 @@ Reproduced identically on both x86 reference and the **IBM LinuxONE s390x VM**:
 
 ## 8. Known Limitations
 
-See [docs/LIMITS.md](file:///c:/Projects/Build%20VoiceGuard%20Dashboard%20(4)/docs/LIMITS.md) for full scientific limitations documentation:
+See [docs/LIMITS.md](docs/LIMITS.md) for full scientific limitations documentation:
 - **Baseline Checkpoint Behavior (Zero Accuracy / EER Claims):** The Track A LCNN checkpoint returned synthetic probability 1.0 on every clip tested (clean bona fide speech, a second clip, the clip with leading silence, gains 0.1x–2x, and a TTS clip). Raw logits were approximately `[-27, +20]` for the clean bona fide clip. No preprocessing bug was found in the gateway path. No accuracy or Equal Error Rate (EER) claims are made for this baseline. The next step is retraining or recalibrating on ASVspoof 2019 LA with a held-out evaluation.
 - **ASVspoof 2019 LA Scope:** Clean 16 kHz English studio speech; unmeasured on regional Indian languages, dialects, or code-switching.
 - **Silence Shortcut:** Well-documented dataset artifacts in ASVspoof 2019 can inflate detection scores on unpadded data.
